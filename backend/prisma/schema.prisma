@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  password  String
+  name      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  projects  Project[]
+  tasks     Task[]
+}
+
+model Project {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  ownerId     Int
+  owner       User     @relation(fields: [ownerId], references: [id])
+  tasks       Task[]
+}
+
+model Task {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  status      Status   @default(TODO)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  projectId   Int
+  project     Project  @relation(fields: [projectId], references: [id])
+  assigneeId  Int?
+  assignee    User?    @relation(fields: [assigneeId], references: [id])
+}
+
+enum Status {
+  TODO
+  IN_PROGRESS
+  DONE
+}
