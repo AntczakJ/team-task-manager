@@ -2,42 +2,6 @@
 
 Aplikacja korzysta z relacyjnej bazy danych **MySQL / MariaDB**, obsługiwanej przez ORM **Prisma** (z adapterem `@prisma/adapter-mariadb`). Schemat źródłowy znajduje się w pliku [`backend/prisma/schema.prisma`](../backend/prisma/schema.prisma), a migracje w katalogu [`backend/prisma/migrations`](../backend/prisma/migrations).
 
-## Diagram ER
-
-```mermaid
-erDiagram
-    User ||--o{ Project : "jest właścicielem (ownerId)"
-    User ||--o{ Task : "jest przypisany (assigneeId)"
-    Project ||--o{ Task : "zawiera (projectId)"
-
-    User {
-        int id PK
-        string email UK "unikalny"
-        string password "hash bcrypt"
-        string name
-        datetime createdAt
-        datetime updatedAt
-    }
-    Project {
-        int id PK
-        string name
-        string description "opcjonalny"
-        datetime createdAt
-        datetime updatedAt
-        int ownerId FK "-> User.id"
-    }
-    Task {
-        int id PK
-        string title
-        string description "opcjonalny"
-        enum status "TODO | IN_PROGRESS | DONE"
-        datetime createdAt
-        datetime updatedAt
-        int projectId FK "-> Project.id"
-        int assigneeId FK "-> User.id, opcjonalny"
-    }
-```
-
 ## Opis tabel
 
 ### User (użytkownik)

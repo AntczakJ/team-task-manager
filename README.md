@@ -43,7 +43,7 @@ Aplikacja posiada rozdzielony frontend i backend:
 ## Dokumentacja
 
 * [Dokumentacja projektu](docs/dokumentacja-projektu.md) – autorzy, jak to działa, jak uruchomić, jak korzystać, podział pracy
-* [Baza danych](docs/baza-danych.md) – opis tabel i diagram ER
+* [Baza danych](docs/baza-danych.md) – opis tabel
 * [Sprawozdanie z testów](docs/sprawozdanie-z-testow.md)
 
 ---

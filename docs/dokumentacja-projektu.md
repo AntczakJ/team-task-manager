@@ -75,7 +75,7 @@ Aplikacja składa się z dwóch niezależnych części komunikujących się prze
 - Hasła są hashowane (`bcryptjs`) - w bazie nigdy nie ma haseł w postaci jawnej.
 - Dostęp do projektów i zadań jest ograniczony do ich właściciela (`ownerId`).
 
-**Model danych:** User (1 - N) Project (1 - N) Task. Opis tabel i diagram ER znajdują się w pliku [`baza-danych.md`](baza-danych.md).
+**Model danych:** User (1 - N) Project (1 - N) Task. Opis tabel znajduje się w pliku [`baza-danych.md`](baza-danych.md).
 
 ## 3. Podział pracy
 
@@ -156,7 +156,7 @@ Konto demonstracyjne (po załadowaniu danych początkowych): e-mail `demo@exampl
 
 ## 6. Baza danych
 
-Opis tabel oraz diagram ER: [`baza-danych.md`](baza-danych.md).
+Opis tabel: [`baza-danych.md`](baza-danych.md).
 
 ## 7. Testy
 
