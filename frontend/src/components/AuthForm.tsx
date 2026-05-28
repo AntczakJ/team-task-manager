@@ -1,7 +1,13 @@
-﻿import React, { useState } from 'react';
-import { authService } from '../services/api';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
+import { authService, getApiErrorMessage } from '../services/api';
+import type { User } from '../types';
 
-const AuthForm = ({ onAuthSuccess }) => {
+interface AuthFormProps {
+  onAuthSuccess: (user: User) => void;
+}
+
+const AuthForm = ({ onAuthSuccess }: AuthFormProps) => {
   const [isLogin, setIsLogin] = useState(true);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -9,7 +15,7 @@ const AuthForm = ({ onAuthSuccess }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
@@ -27,15 +33,12 @@ const AuthForm = ({ onAuthSuccess }) => {
         data = await authService.register(name, email, password);
       }
 
-      // Zapisujemy token i dane użytkownika w przeglądarce
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
 
-      // Informujemy główną aplikację o sukcesie
       onAuthSuccess(data.user);
     } catch (err) {
-      // Obsługa błędów zwracanych przez Twój backend (np. 400, 401, 409)
-      setError(err.response?.data?.message || 'Coś poszło nie tak. Spróbuj ponownie.');
+      setError(getApiErrorMessage(err) || 'Coś poszło nie tak. Spróbuj ponownie.');
     } finally {
       setLoading(false);
     }

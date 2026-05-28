@@ -1,29 +1,33 @@
-﻿import React, { useState, useEffect } from 'react';
-import { projectService } from '../services/api';
-import ProjectTasks from './ProjectTasks'; // <-- NOWOŚĆ
+import { useState, useEffect } from 'react';
+import type { FormEvent, MouseEvent } from 'react';
+import { projectService, getApiErrorMessage } from '../services/api';
+import ProjectTasks from './ProjectTasks';
+import type { Project, Task } from '../types';
 
 const ProjectsList = () => {
-  const [projects, setProjects] = useState([]);
-  const [selectedProjectId, setSelectedProjectId] = useState(null); // śledzenie, który projekt jest otwarty
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const fetchProjects = async () => {
-    try {
-      const data = await projectService.getAll();
-      setProjects(data);
-    } catch (err) {
-      setError('Nie udało się pobrać projektów.');
-    }
-  };
-
   useEffect(() => {
-    fetchProjects();
+    let active = true;
+    (async () => {
+      try {
+        const data = await projectService.getAll();
+        if (active) setProjects(data);
+      } catch {
+        if (active) setError('Nie udało się pobrać projektów.');
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
 
-  const handleCreateProject = async (e) => {
+  const handleCreateProject = async (e: FormEvent) => {
     e.preventDefault();
     if (!name) return;
     setLoading(true);
@@ -35,28 +39,31 @@ const ProjectsList = () => {
       setName('');
       setDescription('');
     } catch (err) {
-      setError(err.response?.data?.message || 'Błąd podczas tworzenia projektu.');
+      setError(getApiErrorMessage(err) || 'Błąd podczas tworzenia projektu.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteProject = async (id, e) => {
-    e.stopPropagation(); // zapobiega otwarciu zadań przy kliknięciu usuń
+  const handleDeleteProject = async (id: number, e: MouseEvent) => {
+    e.stopPropagation();
     if (!window.confirm('Czy na pewno chcesz usunąć ten projekt wraz z zadaniami?')) return;
 
     try {
       await projectService.delete(id);
       setProjects(projects.filter((p) => p.id !== id));
       if (selectedProjectId === id) setSelectedProjectId(null);
-    } catch (err) {
+    } catch {
       setError('Nie udało się usunąć projektu.');
     }
   };
 
-  // Funkcja pomocnicza do aktualizacji licznika zadań na kafelku po dodaniu/usunięciu zadania
-  const handleTaskCountChange = (projectId, newCount) => {
-    setProjects(projects.map(p => p.id === projectId ? { ...p, tasks: { length: newCount } } : p));
+  const handleTaskCountChange = (projectId: number, newCount: number) => {
+    setProjects(
+      projects.map((p) =>
+        p.id === projectId ? { ...p, tasks: { length: newCount } as unknown as Task[] } : p
+      )
+    );
   };
 
   return (
@@ -67,7 +74,6 @@ const ProjectsList = () => {
         </div>
       )}
 
-      {/* Formularz dodawania projektu */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
         <h3 className="text-lg font-bold text-gray-900 mb-4">Utwórz nowy projekt</h3>
         <form onSubmit={handleCreateProject} className="space-y-4 sm:space-y-0 sm:flex sm:gap-4 sm:items-end">
@@ -102,7 +108,6 @@ const ProjectsList = () => {
         </form>
       </div>
 
-      {/* Lista projektów */}
       <div>
         <h3 className="text-xl font-bold text-gray-900 mb-4">Twoje Projekty</h3>
         {projects.length === 0 ? (
@@ -152,7 +157,6 @@ const ProjectsList = () => {
               })}
             </div>
 
-            {/* Dynamiczne ładowanie zadań pod siatką projektów, jeśli jakiś jest zaznaczony */}
             {selectedProjectId && (
               <div className="animate-fadeIn">
                 <div className="bg-white p-2 rounded-xl inline-block border border-gray-200 text-xs font-semibold text-gray-600 mb-2">

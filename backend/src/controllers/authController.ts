@@ -1,26 +1,33 @@
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import type { RequestHandler } from 'express'
 import prisma from '../utils/prismaClient.js'
 
-const generateToken = (user) => {
-  return jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d'
-  })
+interface TokenUser {
+  id: number
+  email: string
 }
 
-export const register = async (req, res, next) => {
+const generateToken = (user: TokenUser): string => {
+  const options: jwt.SignOptions = {
+    expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as jwt.SignOptions['expiresIn']
+  }
+  return jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET as string, options)
+}
+
+export const register: RequestHandler = async (req, res, next) => {
   try {
     const { name, email, password } = req.body
 
     if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Wszystkie pola są wymagane' })
+      res.status(400).json({ message: 'Wszystkie pola są wymagane' })
+      return
     }
 
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
-      return res
-        .status(409)
-        .json({ message: 'Użytkownik z tym emailem już istnieje' })
+      res.status(409).json({ message: 'Użytkownik z tym emailem już istnieje' })
+      return
     }
 
     const hashedPassword = await bcrypt.hash(password, 10)
@@ -40,22 +47,25 @@ export const register = async (req, res, next) => {
   }
 }
 
-export const login = async (req, res, next) => {
+export const login: RequestHandler = async (req, res, next) => {
   try {
     const { email, password } = req.body
 
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email i hasło są wymagane' })
+      res.status(400).json({ message: 'Email i hasło są wymagane' })
+      return
     }
 
     const user = await prisma.user.findUnique({ where: { email } })
     if (!user) {
-      return res.status(401).json({ message: 'Nieprawidłowy email lub hasło' })
+      res.status(401).json({ message: 'Nieprawidłowy email lub hasło' })
+      return
     }
 
     const isMatch = await bcrypt.compare(password, user.password)
     if (!isMatch) {
-      return res.status(401).json({ message: 'Nieprawidłowy email lub hasło' })
+      res.status(401).json({ message: 'Nieprawidłowy email lub hasło' })
+      return
     }
 
     const token = generateToken(user)

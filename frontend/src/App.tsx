@@ -1,18 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import AuthForm from './components/AuthForm';
-import ProjectsList from './components/ProjectsList'; // <-- NOWOŚĆ
+import ProjectsList from './components/ProjectsList';
+import type { User } from './types';
 
 function App() {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
+  const [user, setUser] = useState<User | null>(() => {
     const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-  }, []);
+    return savedUser ? (JSON.parse(savedUser) as User) : null;
+  });
 
-  const handleAuthSuccess = (userData) => {
+  const handleAuthSuccess = (userData: User) => {
     setUser(userData);
   };
 
@@ -26,10 +23,9 @@ function App() {
     <div className="min-h-screen bg-gray-50 pb-12">
       {user ? (
         <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-          {/* Header profilu */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Witaj, {user.name}! 👋</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Witaj, {user.name}!</h1>
               <p className="text-sm text-gray-500">Zalogowany: {user.email}</p>
             </div>
             <button
@@ -40,7 +36,6 @@ function App() {
             </button>
           </div>
 
-          {/* NOWOŚĆ: Lista Projektów */}
           <ProjectsList />
         </div>
       ) : (

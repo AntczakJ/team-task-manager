@@ -1,27 +1,36 @@
-﻿import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import type { FormEvent } from 'react';
 import { taskService } from '../services/api';
+import type { Task, TaskStatus } from '../types';
 
-const ProjectTasks = ({ projectId, onTaskCountChange }) => {
-  const [tasks, setTasks] = useState([]);
+interface ProjectTasksProps {
+  projectId: number;
+  onTaskCountChange?: (count: number) => void;
+}
+
+const ProjectTasks = ({ projectId, onTaskCountChange }: ProjectTasksProps) => {
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const fetchTasks = async () => {
-    try {
-      const data = await taskService.getByProject(projectId);
-      setTasks(data);
-    } catch (err) {
-      setError('Nie udało się pobrać zadań dla tego projektu.');
-    }
-  };
-
   useEffect(() => {
-    fetchTasks();
+    let active = true;
+    (async () => {
+      try {
+        const data = await taskService.getByProject(projectId);
+        if (active) setTasks(data);
+      } catch {
+        if (active) setError('Nie udało się pobrać zadań dla tego projektu.');
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, [projectId]);
 
-  const handleCreateTask = async (e) => {
+  const handleCreateTask = async (e: FormEvent) => {
     e.preventDefault();
     if (!title) return;
     setLoading(true);
@@ -34,35 +43,35 @@ const ProjectTasks = ({ projectId, onTaskCountChange }) => {
       setTitle('');
       setDescription('');
       if (onTaskCountChange) onTaskCountChange(updatedTasks.length);
-    } catch (err) {
+    } catch {
       setError('Błąd podczas dodawania zadania.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusChange = async (id, newStatus) => {
+  const handleStatusChange = async (id: number, newStatus: TaskStatus) => {
     try {
       const updated = await taskService.updateStatus(id, newStatus);
       setTasks(tasks.map((t) => (t.id === id ? { ...t, status: updated.status } : t)));
-    } catch (err) {
+    } catch {
       setError('Nie udało się zmienić statusu.');
     }
   };
 
-  const handleDeleteTask = async (id) => {
+  const handleDeleteTask = async (id: number) => {
     if (!window.confirm('Usunąć to zadanie?')) return;
     try {
       await taskService.delete(id);
       const updatedTasks = tasks.filter((t) => t.id !== id);
       setTasks(updatedTasks);
       if (onTaskCountChange) onTaskCountChange(updatedTasks.length);
-    } catch (err) {
+    } catch {
       setError('Nie udało się usunąć zadania.');
     }
   };
 
-  const statuses = [
+  const statuses: { key: TaskStatus; label: string; color: string }[] = [
     { key: 'TODO', label: 'Do zrobienia', color: 'bg-gray-100 text-gray-800' },
     { key: 'IN_PROGRESS', label: 'W toku', color: 'bg-amber-100 text-amber-800' },
     { key: 'DONE', label: 'Zrobione', color: 'bg-green-100 text-green-800' },
@@ -74,7 +83,6 @@ const ProjectTasks = ({ projectId, onTaskCountChange }) => {
 
       {error && <p className="text-sm text-red-600 bg-red-50 p-2 rounded">{error}</p>}
 
-      {/* Szybki formularz dodawania zadania */}
       <form onSubmit={handleCreateTask} className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
         <input
           type="text"
@@ -100,7 +108,6 @@ const ProjectTasks = ({ projectId, onTaskCountChange }) => {
         </button>
       </form>
 
-      {/* Podział na 3 kolumny statusów (Responsywny Grid) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {statuses.map((statusObj) => (
           <div key={statusObj.key} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col">
@@ -126,7 +133,6 @@ const ProjectTasks = ({ projectId, onTaskCountChange }) => {
                         {task.description && <p className="text-xs text-gray-500 mt-0.5 break-words">{task.description}</p>}
                       </div>
 
-                      {/* Nawigacja zmiany statusu i usuwanie */}
                       <div className="flex justify-between items-center pt-2 border-t border-gray-200/60 text-[11px]">
                         <div className="flex gap-1.5">
                           {statusObj.key !== 'TODO' && (

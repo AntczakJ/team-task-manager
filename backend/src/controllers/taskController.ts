@@ -1,6 +1,7 @@
+import type { RequestHandler } from 'express'
 import prisma from '../utils/prismaClient.js'
 
-export const getTasksByProject = async (req, res, next) => {
+export const getTasksByProject: RequestHandler = async (req, res, next) => {
   try {
     const tasks = await prisma.task.findMany({
       where: { projectId: Number(req.params.projectId) },
@@ -12,7 +13,7 @@ export const getTasksByProject = async (req, res, next) => {
   }
 }
 
-export const getTaskById = async (req, res, next) => {
+export const getTaskById: RequestHandler = async (req, res, next) => {
   try {
     const task = await prisma.task.findUnique({
       where: { id: Number(req.params.id) },
@@ -20,7 +21,8 @@ export const getTaskById = async (req, res, next) => {
     })
 
     if (!task) {
-      return res.status(404).json({ message: 'Zadanie nie istnieje' })
+      res.status(404).json({ message: 'Zadanie nie istnieje' })
+      return
     }
 
     res.status(200).json(task)
@@ -29,12 +31,13 @@ export const getTaskById = async (req, res, next) => {
   }
 }
 
-export const createTask = async (req, res, next) => {
+export const createTask: RequestHandler = async (req, res, next) => {
   try {
     const { title, description, projectId, assigneeId } = req.body
 
     if (!title || !projectId) {
-      return res.status(400).json({ message: 'Tytuł i projekt są wymagane' })
+      res.status(400).json({ message: 'Tytuł i projekt są wymagane' })
+      return
     }
 
     const project = await prisma.project.findUnique({
@@ -42,11 +45,13 @@ export const createTask = async (req, res, next) => {
     })
 
     if (!project) {
-      return res.status(404).json({ message: 'Projekt nie istnieje' })
+      res.status(404).json({ message: 'Projekt nie istnieje' })
+      return
     }
 
-    if (project.ownerId !== req.user.id) {
-      return res.status(403).json({ message: 'Brak dostępu do tego projektu' })
+    if (project.ownerId !== req.user!.id) {
+      res.status(403).json({ message: 'Brak dostępu do tego projektu' })
+      return
     }
 
     const task = await prisma.task.create({
@@ -64,7 +69,7 @@ export const createTask = async (req, res, next) => {
   }
 }
 
-export const updateTask = async (req, res, next) => {
+export const updateTask: RequestHandler = async (req, res, next) => {
   try {
     const task = await prisma.task.findUnique({
       where: { id: Number(req.params.id) },
@@ -72,11 +77,13 @@ export const updateTask = async (req, res, next) => {
     })
 
     if (!task) {
-      return res.status(404).json({ message: 'Zadanie nie istnieje' })
+      res.status(404).json({ message: 'Zadanie nie istnieje' })
+      return
     }
 
-    if (task.project.ownerId !== req.user.id) {
-      return res.status(403).json({ message: 'Brak dostępu do tego zadania' })
+    if (task.project.ownerId !== req.user!.id) {
+      res.status(403).json({ message: 'Brak dostępu do tego zadania' })
+      return
     }
 
     const updated = await prisma.task.update({
@@ -90,7 +97,7 @@ export const updateTask = async (req, res, next) => {
   }
 }
 
-export const deleteTask = async (req, res, next) => {
+export const deleteTask: RequestHandler = async (req, res, next) => {
   try {
     const task = await prisma.task.findUnique({
       where: { id: Number(req.params.id) },
@@ -98,11 +105,13 @@ export const deleteTask = async (req, res, next) => {
     })
 
     if (!task) {
-      return res.status(404).json({ message: 'Zadanie nie istnieje' })
+      res.status(404).json({ message: 'Zadanie nie istnieje' })
+      return
     }
 
-    if (task.project.ownerId !== req.user.id) {
-      return res.status(403).json({ message: 'Brak dostępu do tego zadania' })
+    if (task.project.ownerId !== req.user!.id) {
+      res.status(403).json({ message: 'Brak dostępu do tego zadania' })
+      return
     }
 
     await prisma.task.delete({
@@ -115,13 +124,14 @@ export const deleteTask = async (req, res, next) => {
   }
 }
 
-export const updateTaskStatus = async (req, res, next) => {
+export const updateTaskStatus: RequestHandler = async (req, res, next) => {
   try {
     const { status } = req.body
     const validStatuses = ['TODO', 'IN_PROGRESS', 'DONE']
 
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ message: 'Nieprawidłowy status' })
+      res.status(400).json({ message: 'Nieprawidłowy status' })
+      return
     }
 
     const task = await prisma.task.findUnique({
@@ -130,11 +140,13 @@ export const updateTaskStatus = async (req, res, next) => {
     })
 
     if (!task) {
-      return res.status(404).json({ message: 'Zadanie nie istnieje' })
+      res.status(404).json({ message: 'Zadanie nie istnieje' })
+      return
     }
 
-    if (task.project.ownerId !== req.user.id) {
-      return res.status(403).json({ message: 'Brak dostępu do tego zadania' })
+    if (task.project.ownerId !== req.user!.id) {
+      res.status(403).json({ message: 'Brak dostępu do tego zadania' })
+      return
     }
 
     const updated = await prisma.task.update({
